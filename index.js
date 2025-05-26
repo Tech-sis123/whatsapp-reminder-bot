@@ -95,50 +95,72 @@ function sendReminder(phone, name, tasks) {
     .catch((err) => console.error("Twilio error:", err));
 }
 
-function scheduleReminders() {
-  fetchSheetData().then((records) => {
-    records.forEach((r) => {
-      const name = r["Full Name"];
-      const phone = r["Phone Number"];
-      const goal = r["Goal"];
-      const wantsSuggestions = (r["Do you want suggested tasks?"] || "").toLowerCase() === "yes";
-      const customTasks = r["If No, list your tasks"] || "";
+async function scheduleReminders() {
+  const records = await fetchSheetData();
 
-      const rawTasks = wantsSuggestions ? suggestTasks(goal) : customTasks.split(",").map(t => t.trim());
-      const taskChunks = chunkArray(rawTasks, 3); // distribute across 3 times
+  records.forEach((r) => {
+    const name = r["Full Name"];
+    const phone = r["Phone Number"];
+    const goal = r["Goal"];
+    const wantsSuggestions = (r["Do you want suggested tasks?"] || "").toLowerCase() === "yes";
+    const customTasks = r["If No, list your tasks"] || "";
 
-      const timeFields = [
-        "Preferred Reminder Time 1",
-        "Preferred Reminder Time 2",
-        "Preferred Reminder Time 3"
-      ];
+    const rawTasks = wantsSuggestions ? suggestTasks(goal) : customTasks.split(",").map(t => t.trim());
+    const taskChunks = chunkArray(rawTasks, 3); // distribute across 3 times
 
-      timeFields.forEach((field, index) => {
-        const preferredTime = r[field];
-        if (!preferredTime) return;
+    const timeFields = [
+      "Preferred Reminder Time 1",
+      "Preferred Reminder Time 2",
+      "Preferred Reminder Time 3"
+    ];
 
-        const momentTime = moment(preferredTime, ["HH:mm", "h:mm A"]);
-        const hour = momentTime.hour();
-        const minute = momentTime.minute();
+    timeFields.forEach((field, index) => {
+      const preferredTime = r[field];
+      if (!preferredTime) return;
 
-        const cronExpression = `${minute} ${hour} * * *`; // Daily
+      const momentTime = moment(preferredTime, ["HH:mm", "h:mm A"]);
+      const hour = momentTime.hour();
+      const minute = momentTime.minute();
 
-        const tasksForThisTime = taskChunks[index] || [];
+      const cronExpression = `${minute} ${hour} * * *`; // Daily
 
-        cron.schedule(cronExpression, () => {
-          sendReminder(phone, name, tasksForThisTime);
-        }, {
-          timezone: "Africa/Lagos"
-        });
+      const tasksForThisTime = taskChunks[index] || [];
+
+      cron.schedule(cronExpression, () => {
+        sendReminder(phone, name, tasksForThisTime);
+      }, {
+        timezone: "Africa/Lagos"
       });
     });
   });
 }
 
+// ✅ Run the scheduler once daily at 12:05 AM to set up that day’s reminder jobs
+cron.schedule("5 0 * * *", () => {
+  console.log("🗓️ Running daily schedule setup...");
+  scheduleReminders();
+}, {
+  timezone: "Africa/Lagos"
+});
+
+// Optional manual trigger for dev/debug
 app.get("/trigger", (req, res) => {
   scheduleReminders();
   res.send("Reminders scheduled.");
 });
+
+app.get("/", (req, res) => {
+  res.send("✅ Reminder bot is live and running!");
+});
+
+// Schedule the master trigger once daily at 12:05 AM
+cron.schedule("5 0 * * *", () => {
+  console.log("⏰ Running daily setup of reminders...");
+  scheduleReminders();
+}, {
+  timezone: "Africa/Lagos"
+});
+
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
