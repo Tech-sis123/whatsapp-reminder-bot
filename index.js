@@ -1,27 +1,28 @@
-// whatsapp-reminder-bot/index.js
-import fs from 'fs';
+const fs = require('fs');
+const dotenv = require('dotenv');
 
-// Step 1: Decode base64 env var and write credentials.json file
+dotenv.config();
+
+// Step 1: Decode base64 env var and write credentials.json before anything else
 const base64Creds = process.env.GOOGLE_CREDENTIALS_BASE64;
 if (base64Creds) {
   const buff = Buffer.from(base64Creds, 'base64');
   fs.writeFileSync('./credentials.json', buff);
+  console.log('✅ credentials.json file created from base64 env var.');
 } else {
-  console.error('Error: GOOGLE_CREDENTIALS_BASE64 env var is not set');
-  process.exit(1); // stop if credentials missing
+  console.error('❌ Error: GOOGLE_CREDENTIALS_BASE64 env var is not set');
+  process.exit(1); // Stop app if credentials missing
 }
 
-import someGoogleLib from 'googleapis';
-
-
+// Now continue with the rest of your imports and app code
 const express = require("express");
 const { google } = require("googleapis");
 const cron = require("node-cron");
 const twilio = require("twilio");
-const dotenv = require("dotenv");
 const moment = require("moment");
 
-dotenv.config();
+// ... rest of your code continues as before
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -178,4 +179,4 @@ app.get("/", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
-});
+}); 
