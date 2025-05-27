@@ -154,12 +154,12 @@ app.get("/", (req, res) => {
 });
 
 // Schedule the master trigger once daily at 12:05 AM
-cron.schedule("5 0 * * *", () => {
-  console.log("⏰ Running daily setup of reminders...");
-  scheduleReminders();
-}, {
-  timezone: "Africa/Lagos"
-});
+// cron.schedule("5 0 * * *", () => {
+//   console.log("⏰ Running daily setup of reminders...");
+  // scheduleReminders();
+// }, {
+//   timezone: "Africa/Lagos"
+// });
 
 
 app.listen(port, () => {
