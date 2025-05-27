@@ -1,4 +1,18 @@
 // whatsapp-reminder-bot/index.js
+import fs from 'fs';
+
+// Step 1: Decode base64 env var and write credentials.json file
+const base64Creds = process.env.GOOGLE_CREDENTIALS_BASE64;
+if (base64Creds) {
+  const buff = Buffer.from(base64Creds, 'base64');
+  fs.writeFileSync('./credentials.json', buff);
+} else {
+  console.error('Error: GOOGLE_CREDENTIALS_BASE64 env var is not set');
+  process.exit(1); // stop if credentials missing
+}
+
+import someGoogleLib from 'googleapis';
+
 
 const express = require("express");
 const { google } = require("googleapis");
